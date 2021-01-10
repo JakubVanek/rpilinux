@@ -32,6 +32,7 @@
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-event.h>
 #include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
 #include <media/i2c/tc358743.h>
 
 #include "tc358743_regs.h"
@@ -53,6 +54,9 @@ MODULE_LICENSE("GPL");
 
 #define POLL_INTERVAL_CEC_MS	10
 #define POLL_INTERVAL_MS	1000
+
+/* Number of frames to skip */
+#define TC358743_NUM_OF_SKIP_FRAMES	1
 
 static const struct v4l2_dv_timings_cap tc358743_timings_cap = {
 	.type = V4L2_DV_BT_656_1120,
@@ -1821,6 +1825,16 @@ static int tc358743_s_edid(struct v4l2_subdev *sd,
 	return 0;
 }
 
+/* --------------- SENSOR OPS --------------- */
+
+static int tc358743_get_skip_frames(struct v4l2_subdev *sd,
+		u32 *frames)
+{
+	*frames = TC358743_NUM_OF_SKIP_FRAMES;
+
+	return 0;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static const struct v4l2_subdev_core_ops tc358743_core_ops = {
@@ -1853,10 +1867,15 @@ static const struct v4l2_subdev_pad_ops tc358743_pad_ops = {
 	.get_mbus_config = tc358743_get_mbus_config,
 };
 
+static const struct v4l2_subdev_sensor_ops tc358743_sensor_ops = {
+	.g_skip_frames = tc358743_get_skip_frames,
+};
+
 static const struct v4l2_subdev_ops tc358743_ops = {
 	.core = &tc358743_core_ops,
 	.video = &tc358743_video_ops,
 	.pad = &tc358743_pad_ops,
+	.sensor = &tc358743_sensor_ops,
 };
 
 /* --------------- CUSTOM CTRLS --------------- */
